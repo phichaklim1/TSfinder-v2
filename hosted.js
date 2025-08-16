@@ -31,7 +31,7 @@ async function loadHosted(){
     setStatus?.("โหลดฐานข้อมูลแล้ว: "+DATA.length+" แถว");
     buildUI();
   }catch(e){
-    setStatus?.("โหลดฐานข้อมูลไม่สำเร็จ: "+(e.message||e));
+    setStatus?.("โหลดตัวอ่านไฟล์ไม่สำเร็จ หรือโหลดไฟล์ไม่สำเร็จ");
   }
 }
 

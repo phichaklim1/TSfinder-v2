@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thai Stock Finder — LOCAL v2 (reset)</title>
+<title>Thai Stock Finder — LOCAL v2 (classic)</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="hdr">
-  <h1>Thai Stock Finder — โหมดไฟล์</h1>
-  <div class="sub">ใช้เมื่อเปิดแบบ file:// โดยไม่ผ่านเซิร์ฟเวอร์</div>
+  <h1>Thai Stock Finder — โหมดไฟล์ (ทดสอบบนเครื่อง)</h1>
+  <div class="sub">เปิดไฟล์นี้แบบดับเบิลคลิก แล้วเลือกฐานข้อมูลจากเครื่อง</div>
 </header>
 
 <main class="container">
@@ -25,7 +25,7 @@
       <button id="searchBtn" type="button" class="btn btn-primary">ค้นหา</button>
       <div class="picker">
         <input type="file" id="picker" accept=".xlsx" />
-        <small id="status">ลากไฟล์ <b>database.xlsx</b> มาปล่อยที่นี่ หรือกดเลือกไฟล์</small>
+        <small id="status">เลือก <b>database.xlsx</b> จากเครื่อง</small>
       </div>
     </section>
     <section id="result" class="result" style="display:none">
@@ -57,7 +57,9 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-<script>window.LOCAL_MODE=true;</script>
-<script src="hosted.js?v=reset3"></script>
+<script>
+  window.LOCAL_MODE = true;
+</script>
+<script src="hosted.js?v=adv2classic"></script>
 </body>
 </html>

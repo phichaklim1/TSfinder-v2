@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thai Stock Finder — HOSTED v2 (reset)</title>
+<title>Thai Stock Finder — HOSTED v2 (classic)</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -55,21 +55,8 @@
   </section>
 </main>
 
-<script>
-// Load SheetJS (CDN fallbacks) then hosted.js
-(function(){
-  const cdns = [
-    "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
-    "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js"
-  ];
-  function load(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(src);document.head.appendChild(s);});}
-  (async()=>{
-    let ok=false;
-    for(const u of cdns){ try{ await load(u); if(window.XLSX){ ok=true; break; } }catch(_){ } }
-    if(!ok){ document.getElementById('status').textContent="โหลดตัวอ่านไฟล์ไม่สำเร็จ"; return; }
-    const s=document.createElement('script'); s.src="hosted.js?v=reset3"; s.defer=true; document.body.appendChild(s);
-  })();
-})();
-</script>
+<!-- SheetJS from jsDelivr (same as ADV v2) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+<script src="hosted.js?v=adv2classic"></script>
 </body>
 </html>
