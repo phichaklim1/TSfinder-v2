@@ -45,3 +45,13 @@ a{color:#0a6cff}
   color:#000;
 }
 .btn-pro:hover{ background:#e6f0ff; }
+
+/* แถบปุ่มไปหน้าค้นหาแบบหลายเงื่อนไข จัดชิดขวา */
+.pro-link-bar{
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ตัด margin ขวาให้ชิดขอบมากขึ้น (ถ้าอยาก) */
+.pro-link-bar .btn-pro{ margin-right: 0; }
