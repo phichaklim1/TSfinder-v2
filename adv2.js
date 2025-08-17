@@ -132,8 +132,10 @@ const THAI_LABEL = {
 
     const fieldSel = document.createElement("select"); fieldSel.className="fld";
     state.HEADERS.forEach(h=>{
-      const opt=document.createElement("option"); const th=THAI_LABEL[h]?` / ${THAI_LABEL[h]}`:"";
-      opt.textContent = THAI_LABEL[h] ? `${THAI_LABEL[h]} / ${h}` : h;
+      const opt = document.createElement("option");
+      opt.value = h;                                           // **สำคัญ** ให้มีค่า value
+      opt.textContent = THAI_LABEL[h] ? `${THAI_LABEL[h]} / ${h}` : h;  // แสดง ไทย / อังกฤษ
+      fieldSel.appendChild(opt);                               // **สำคัญ** ใส่ option เข้า select
     });
 
     const spacer = document.createElement("select"); spacer.className="mid"; spacer.innerHTML = `<option>—</option>`;
