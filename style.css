@@ -52,3 +52,23 @@ a{color:#0a6cff}
   justify-content: flex-end;
   margin-top: 8px;
 }
+
+/* ปุ่มค้นหา (หน้า PRO) — สีเขียว ขนาดใหญ่ */
+.adv2-runbar #runBottom{
+  background: #22c55e;      /* เขียว */
+  color: #0b2b1c;           /* เขียวเข้มอ่านง่าย หรือใช้ #fff ก็ได้ */
+  border: none;
+  padding: 14px 28px;       /* ใหญ่ขึ้น */
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 16px;
+  box-shadow: 0 2px 0 rgba(0,0,0,.25);
+}
+.adv2-runbar #runBottom:hover{
+  background: #16a34a;      /* เขียวเข้มขึ้นเมื่อ hover */
+}
+.adv2-runbar{
+  display:flex;
+  justify-content:center;   /* ให้อยู่กลางแถวเหมือนเดิม */
+  margin:18px 0;
+}
