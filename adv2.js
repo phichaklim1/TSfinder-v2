@@ -1,0 +1,295 @@
+(function(){
+  const norm = (s) => (s==null?"":String(s)).trim();
+  const toNum = (v) => typeof v==="number" ? v : (typeof v==="string" ? ((n=Number(v.replace(/,/g,""))), isNaN(n)?null:n) : null);
+  const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+
+  const ZONES = { lower:new Set(["LOWER","LOW","LOW ZONE","LOWER ZONE","โซนล่าง","ล่าง"]),
+                  middle:new Set(["MIDDLE","MID","MID ZONE","MIDDLE ZONE","โซนกลาง","กลาง"]),
+                  upper:new Set(["UPPER","HIGH","HIGH ZONE","UPPER ZONE","โซนบน","บน"]) };
+
+  const THAI_LABEL = {"Symbol":"ชื่อย่อหุ้น","Stock symbol":"ชื่อย่อหุ้น","Last (Bht)":"ราคาล่าสุด (บาท)","Open (Bht)":"ราคาเปิด (บาท)","Prev. Last (Bht)":"ราคาปิดก่อนหน้า (บาท)","Price Zone":"โซนราคา","Volume":"ปริมาณ","% PriceChange":"% เปลี่ยนแปลงราคา","% PriceGrowth in 3 days":"% การเติบโต 3 วัน","TurnoverRatio(%)":"อัตราหมุนเวียน (%)","% Vol Turnover":"% หมุนเวียนวอลุ่ม","% Vol. growth":"% การเติบโตวอลุ่ม"};
+
+  const isPercentFieldName = (h) => h.includes("%") || /(growth|change|ratio)/i.test(h);
+  const isVolumeFieldName = (h) => h.toLowerCase().replace(/\./g,"").includes("volume");
+
+  function symbolKey(headers){
+    for (const k of ["Stock symbol","Symbol","stock symbol","symbol","code","ticker","ชื่อย่อหุ้น"]) if (headers.includes(k)) return k;
+    return headers[0]||"";
+  }
+  function isNumericField(header,data){
+    let num=0, tot=0;
+    for(const r of data){
+      const v=r[header]; if(v==null || String(v).trim()==="") continue;
+      tot++; if (toNum(v)!=null) num++; if (tot>=50) break;
+    }
+    return tot>0 && (num/tot)>=0.7;
+  }
+  function formatValue(header, raw){
+    const n = toNum(raw);
+    if (n==null) return (raw==null || String(raw).trim()==="") ? "-" : String(raw);
+    const d = isVolumeFieldName(header) ? 0 : 2;
+    return new Intl.NumberFormat("en-US",{minimumFractionDigits:d, maximumFractionDigits:d}).format(n);
+  }
+
+  const rowsEl = document.getElementById("rows");
+  const addRowBtn = document.getElementById("addRow");
+  const runBtn = document.getElementById("run");
+  const clearBtn = document.getElementById("clear");
+  const logicSelect = document.getElementById("logicSelect");
+  const statusEl = document.getElementById("status");
+  const resultTitle = document.getElementById("resultTitle");
+  const tableWrap = document.getElementById("tableWrap");
+  const presetName = document.getElementById("presetName");
+  const savePreset = document.getElementById("savePreset");
+  const presetList = document.getElementById("presetList");
+  const loadPreset = document.getElementById("loadPreset");
+  const deletePreset = document.getElementById("deletePreset");
+  const copyLink = document.getElementById("copyLink");
+
+  const state = {HEADERS:[], DATA:[], SYM:""};
+
+  async function loadDB(){
+    const res = await fetch("database.xlsx",{cache:"no-store"});
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(new Uint8Array(buf), { type:"array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const sheet = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    state.HEADERS = (sheet[0]||[]).map(x=>norm(x));
+    state.DATA = [];
+    for(let i=1;i<sheet.length;i++){
+      const row = sheet[i]||[];
+      if(!row.some(v=>v!=null && String(v).trim()!=="")) continue;
+      const obj={}; for(let j=0;j<state.HEADERS.length;j++) obj[state.HEADERS[j]] = row[j];
+      state.DATA.push(obj);
+    }
+    state.SYM = symbolKey(state.HEADERS);
+    statusEl.textContent = "โหลดฐานข้อมูลแล้ว: " + state.DATA.length + " แถว";
+    buildPresetList();
+    if (!fromHash()) addRow();
+  }
+
+  function rowTemplate(idx){
+    const rowId = "r"+idx, el = document.createElement("div"); el.className="adv2-row"; el.dataset.idx=idx;
+
+    const fieldSel = document.createElement("select"); fieldSel.className="fld";
+    state.HEADERS.forEach(h=>{
+      const opt=document.createElement("option"); const th=THAI_LABEL[h]?` / ${THAI_LABEL[h]}`:"";
+      opt.value=h; opt.textContent=h+th; fieldSel.appendChild(opt);
+    });
+
+    const spacer = document.createElement("select"); spacer.className="mid"; spacer.innerHTML = `<option>—</option>`;
+
+    const numWrap = document.createElement("div"); numWrap.className="adv2-flex numwrap adv2-hidden";
+    const opSel = document.createElement("select"); opSel.innerHTML = `<option value="<">&lt;</option><option value="≤">≤</option><option value="=">=</option><option value="≥">≥</option><option value=">">&gt;</option><option value="between">ระหว่าง</option>`;
+    const n1 = document.createElement("input"); n1.type="number"; n1.step="0.01"; n1.placeholder="เช่น 0.40";
+    const n2 = document.createElement("input"); n2.type="number"; n2.step="0.01"; n2.placeholder="ถึง"; n2.className="n2 adv2-hidden";
+
+    const slider = document.createElement("div"); slider.className="adv2-flex adv2-hidden sliderpack";
+    slider.innerHTML = `<div class="adv2-flex" style="flex:1;gap:6px"><input type="range" class="sMin"><input type="range" class="sMax"></div>
+      <div class="adv2-flex"><input type="number" class="sMinVal" step="0.01" style="width:110px"><span>ถึง</span><input type="number" class="sMaxVal" step="0.01" style="width:110px"><span class="adv2-small">%</span></div>`;
+
+    const textWrap = document.createElement("div"); textWrap.className="adv2-flex textwrap adv2-hidden";
+    const tMode = document.createElement("select"); tMode.innerHTML = `<option value="eq">เท่ากับ</option><option value="contains">มีคำว่า</option><option value="starts">ขึ้นต้นด้วย</option><option value="ends">ลงท้ายด้วย</option>`;
+    const tInput = document.createElement("input"); tInput.type="text"; tInput.placeholder="ค่า/คำที่ต้องการ"; tInput.setAttribute("list","list-"+rowId);
+    const dlist = document.createElement("datalist"); dlist.id="list-"+rowId;
+
+    const zoneWrap = document.createElement("div"); zoneWrap.className="adv2-flex zonewrap adv2-hidden";
+    zoneWrap.innerHTML = `<label>โซน:</label><select class="zoneSel"><option value="">—</option><option value="lower">โซนล่าง (Lower)</option><option value="middle">โซนกลาง (Middle)</option><option value="upper">โซนบน (Upper)</option></select>`;
+
+    const kill = document.createElement("button"); kill.textContent="ลบ"; kill.className="kill";
+
+    el.appendChild(fieldSel); el.appendChild(spacer); el.appendChild(numWrap); el.appendChild(textWrap); el.appendChild(kill);
+    numWrap.appendChild(opSel); numWrap.appendChild(n1); numWrap.appendChild(n2); numWrap.appendChild(slider);
+    textWrap.appendChild(tMode); textWrap.appendChild(tInput); textWrap.appendChild(zoneWrap); el.appendChild(dlist);
+
+    function refresh(){
+      const h = fieldSel.value;
+      const numeric = isNumericField(h, state.DATA);
+      if (numeric){
+        textWrap.classList.add("adv2-hidden"); zoneWrap.classList.add("adv2-hidden");
+        numWrap.classList.remove("adv2-hidden");
+        const isVol = h.toLowerCase().replace(/\./g,"").includes("volume");
+        n1.step = n2.step = isVol ? "1":"0.01";
+        const pct = isPercentFieldName(h);
+        const showSlider = (pct && opSel.value==="between");
+        slider.classList.toggle("adv2-hidden", !showSlider);
+        if (pct){
+          const values = []; for(const r of state.DATA){ const v=toNum(r[h]); if(v!=null) values.push(v); }
+          let lo = Math.min(...values), hi = Math.max(...values);
+          if (!isFinite(lo)) { lo=-100; hi=100; }
+          const sMin = slider.querySelector(".sMin"), sMax = slider.querySelector(".sMax");
+          const sMinVal = slider.querySelector(".sMinVal"), sMaxVal = slider.querySelector(".sMaxVal");
+          sMin.min = sMax.min = Math.floor(lo); sMin.max = sMax.max = Math.ceil(hi); sMin.step = sMax.step = "1";
+          if(sMin.value==="") sMin.value = String(Math.floor(lo));
+          if(sMax.value==="") sMax.value = String(Math.ceil(hi));
+          sMinVal.value = sMin.value; sMaxVal.value = sMax.value; n1.value = sMin.value; n2.value = sMax.value;
+          const syncS = ()=>{ sMinVal.value=sMin.value; sMaxVal.value=sMax.value; n1.value=sMin.value; n2.value=sMax.value; };
+          const syncI = ()=>{ sMin.value=sMinVal.value; sMax.value=sMaxVal.value; n1.value=sMinVal.value; n2.value=sMaxVal.value; };
+          sMin.oninput = sMax.oninput = syncS; sMinVal.oninput = sMaxVal.oninput = syncI;
+        }
+      }else{
+        numWrap.classList.add("adv2-hidden"); slider.classList.add("adv2-hidden");
+        textWrap.classList.remove("adv2-hidden");
+        const set = new Set(); for(const r of state.DATA){ const v=norm(r[h]); if(v) set.add(v); if(set.size>200) break; }
+        dlist.innerHTML = Array.from(set).sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"})).map(v=>`<option value="${escapeHtml(v)}"></option>`).join("");
+        zoneWrap.classList.toggle("adv2-hidden", h!=="Price Zone");
+      }
+    }
+
+    opSel.addEventListener("change", ()=>{
+      const showBetween = opSel.value==="between";
+      n2.classList.toggle("adv2-hidden", !showBetween);
+      refresh();
+    });
+    fieldSel.addEventListener("change", refresh);
+    kill.addEventListener("click", ()=> el.remove());
+    refresh();
+    return el;
+  }
+
+  function addRow(){ rowsEl.appendChild(rowTemplate(document.querySelectorAll(".adv2-row").length+1)); }
+
+  function collect(){
+    const arr=[];
+    document.querySelectorAll(".adv2-row").forEach(row=>{
+      const field = row.querySelector(".fld").value;
+      const numeric = isNumericField(field, state.DATA);
+      if (numeric){
+        const op = row.querySelector(".numwrap select").value;
+        const a = toNum(row.querySelector(".numwrap input[type=number]").value);
+        const bEl = row.querySelector(".numwrap .n2"); const b = bEl && !bEl.classList.contains("adv2-hidden") ? toNum(bEl.value) : null;
+        arr.push({kind:"num", field, op, a, b});
+      }else{
+        const mode = row.querySelector(".textwrap select").value;
+        const text = row.querySelector(".textwrap input[type=text]").value;
+        const zoneSel = row.querySelector(".zonewrap .zoneSel");
+        const zoneKey = zoneSel && !zoneSel.parentElement.classList.contains("adv2-hidden") ? zoneSel.value : "";
+        arr.push({kind:"text", field, mode, text, zoneKey});
+      }
+    });
+    return arr;
+  }
+
+  function matchOne(f, rec){
+    const val = rec[f.field];
+    if (f.kind==="num"){
+      const x = toNum(val); if (x==null || f.a==null) return false;
+      switch(f.op){
+        case "<": return x < f.a;
+        case "≤": return x <= f.a;
+        case "=": return x === f.a;
+        case "≥": return x >= f.a;
+        case ">": return x > f.a;
+        case "between":
+          if (f.b==null) return false;
+          const lo=Math.min(f.a,f.b), hi=Math.max(f.a,f.b);
+          return x>=lo && x<=hi;
+        default: return false;
+      }
+    }else{
+      if (f.field==="Price Zone" && f.zoneKey){
+        const s = norm(val).toUpperCase();
+        if (f.zoneKey==="lower") return ZONES.lower.has(s);
+        if (f.zoneKey==="middle") return ZONES.middle.has(s);
+        if (f.zoneKey==="upper") return ZONES.upper.has(s);
+      }
+      const s = norm(val), q = norm(f.text);
+      if (!q && !f.zoneKey) return false;
+      switch(f.mode){
+        case "eq": return s.localeCompare(q,"en",{sensitivity:"base"})===0;
+        case "contains": return s.toLowerCase().includes(q.toLowerCase());
+        case "starts": return s.toLowerCase().startsWith(q.toLowerCase());
+        case "ends": return s.toLowerCase().endsWith(q.toLowerCase());
+        default: return false;
+      }
+    }
+  }
+
+  function run(){
+    const filters = collect();
+    const logic = document.getElementById("logicSelect").value;
+    const cols = new Set([state.SYM]); filters.forEach(f=>cols.add(f.field));
+    const rows = state.DATA.filter(rec => {
+      if (filters.length===0) return true;
+      return logic==="AND" ? filters.every(f=>matchOne(f,rec)) : filters.some(f=>matchOne(f,rec));
+    });
+    render(Array.from(cols), rows);
+  }
+
+  function render(headers, recs){
+    resultTitle.style.display="block"; resultTitle.textContent = `ผลลัพธ์: ${recs.length.toLocaleString("en-US")} รายการ`;
+    const tbl = document.createElement("table"); tbl.className="adv2-table";
+    const thead=document.createElement("thead"); const trh=document.createElement("tr");
+    trh.innerHTML = headers.map(h=>`<th>${escapeHtml(THAI_LABEL[h]? `${h} / ${THAI_LABEL[h]}`: h)}</th>`).join("");
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tbody=document.createElement("tbody");
+    recs.sort((a,b)=>String(a[state.SYM]||"").localeCompare(String(b[state.SYM]||""),"en",{sensitivity:"base"}));
+    for(const r of recs){
+      const tr=document.createElement("tr");
+      tr.innerHTML = headers.map(h=>{
+        const v=r[h]; if (toNum(v)!=null) return `<td>${escapeHtml(formatValue(h,v))}</td>`;
+        return `<td>${escapeHtml(v==null?"-":String(v))}</td>`;
+      }).join("");
+      tbody.appendChild(tr);
+    }
+    tbl.appendChild(tbody); tableWrap.innerHTML=""; tableWrap.appendChild(tbl);
+  }
+
+  const LSKEY="tsf_presets_v2";
+  function listPresets(){ try{return JSON.parse(localStorage.getItem(LSKEY)||"[]");}catch{ return []; } }
+  function savePresets(arr){ localStorage.setItem(LSKEY, JSON.stringify(arr)); }
+  function buildPresetList(){ const arr=listPresets(); presetList.innerHTML = arr.map((p,i)=>`<option value="${i}">${(p.name||('Preset '+i))}</option>`).join(""); }
+  function applyConfig(cfg){
+    rowsEl.innerHTML="";
+    (cfg.rows||[]).forEach(()=>addRow());
+    const els=[...document.querySelectorAll(".adv2-row")];
+    (cfg.rows||[]).forEach((r,i)=>{
+      const row=els[i];
+      row.querySelector(".fld").value = r.field; row.querySelector(".fld").dispatchEvent(new Event("change"));
+      if (r.kind==="num"){
+        const opSel = row.querySelector(".numwrap select"); opSel.value = r.op;
+        const aEl = row.querySelector(".numwrap input[type=number]"); aEl.value = r.a ?? "";
+        const bEl = row.querySelector(".numwrap .n2");
+        if (r.op==="between"){ bEl.classList.remove("adv2-hidden"); bEl.value = r.b ?? ""; }
+        else { bEl.classList.add("adv2-hidden"); bEl.value=""; }
+      }else{
+        row.querySelector(".textwrap select").value = r.mode;
+        row.querySelector(".textwrap input[type=text]").value = r.text || "";
+        const zSel = row.querySelector(".zonewrap .zoneSel"); if (zSel) zSel.value = r.zoneKey || "";
+      }
+    });
+    logicSelect.value = cfg.logic || "AND";
+  }
+  function cfg(){ return {logic:logicSelect.value, rows:collect()}; }
+  function toHash(){ const str=btoa(unescape(encodeURIComponent(JSON.stringify(cfg())))); return "#q="+str; }
+  function fromHash(){
+    if (!location.hash.startsWith("#q=")) return false;
+    try{
+      const json = decodeURIComponent(escape(atob(location.hash.slice(3))));
+      const c = JSON.parse(json); applyConfig(c); run(); return true;
+    }catch(e){ console.warn("Invalid hash",e); return false; }
+  }
+
+  addRowBtn.addEventListener("click", addRow);
+  runBtn.addEventListener("click", run);
+  clearBtn.addEventListener("click", ()=>{ rowsEl.innerHTML=""; });
+  savePreset.addEventListener("click", ()=>{
+    const name = norm(presetName.value) || ("Preset "+new Date().toLocaleString());
+    const arr = listPresets(); arr.push({name, ...cfg()}); savePresets(arr); buildPresetList();
+  });
+  loadPreset.addEventListener("click", ()=>{
+    const idx = Number(presetList.value); const arr=listPresets();
+    if (!isNaN(idx) && arr[idx]) applyConfig(arr[idx]);
+  });
+  deletePreset.addEventListener("click", ()=>{
+    const idx=Number(presetList.value); const arr=listPresets();
+    if (!isNaN(idx) && arr[idx]){ arr.splice(idx,1); savePresets(arr); buildPresetList(); }
+  });
+  copyLink.addEventListener("click", async ()=>{
+    const url = location.origin + location.pathname + toHash();
+    try{ await navigator.clipboard.writeText(url); statusEl.textContent="คัดลอกลิงก์แล้ว"; }catch{ statusEl.textContent="คัดลอกไม่สำเร็จ"; }
+    history.replaceState(null,"", toHash());
+  });
+
+  loadDB();
+})();

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thai Stock Finder — Advanced PRO</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .adv2-wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .adv2-row{display:grid;grid-template-columns:220px 130px 1fr 1fr auto;gap:8px;align-items:center;border:2px dashed var(--border);padding:10px;border-radius:12px;background:#fff;margin-bottom:10px}
+    .adv2-row .kill{padding:8px 10px}
+    .adv2-small{font-size:12px;color:#666}
+    .adv2-table{width:100%;border-collapse:collapse;background:#fff}
+    .adv2-table th,.adv2-table td{border:2px solid var(--border);padding:8px 10px;text-align:left;vertical-align:middle}
+    .adv2-table th{font-weight:900}
+    .adv2-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef}
+    .adv2-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eee;margin-right:6px;margin-bottom:4px}
+    .adv2-note{margin:8px 0;color:#666}
+    .adv2-hidden{display:none}
+    .adv2-flex{display:flex;gap:8px;align-items:center}
+    input[type="range"]{width:100%}
+    .adv2-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+    .adv2-head a{font-size:14px}
+    .adv2-footer{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+    .adv2-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .adv2-presets input[type="text"]{min-width:220px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">Thai Stock Finder — Advanced PRO (หลายเงื่อนไข + สไลเดอร์ + พรีเซ็ต)</div>
+    <div style="margin-top:8px">
+      <a href="index.html">← กลับหน้าแรก</a>
+      <span class="adv2-note">หน้านี้เป็นเวอร์ชันใหม่ แยกจากไฟล์เดิมของคุณ เพื่อไม่ทับการแก้ไข</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="adv2-wrap">
+      <div class="adv2-head">
+        <div>
+          <span class="adv2-chip">รวมเงื่อนไข: </span>
+          <select id="logicSelect">
+            <option value="AND">AND (ตรงทุกเงื่อนไข)</option>
+            <option value="OR">OR (ตรงอย่างน้อยหนึ่ง)</option>
+          </select>
+          <span class="adv2-note">ตัวเลข 2 ตำแหน่ง ยกเว้น Volume เป็นจำนวนเต็ม</span>
+        </div>
+        <div>
+          <button id="addRow">+ เพิ่มเงื่อนไข</button>
+          <button id="run">ค้นหา</button>
+          <button id="clear">ล้าง</button>
+        </div>
+      </div>
+
+      <div id="rows"></div>
+
+      <div class="adv2-footer">
+        <div><span id="status" class="adv2-badge">กำลังโหลดฐานข้อมูล…</span></div>
+        <div class="adv2-presets">
+          <input id="presetName" type="text" placeholder="ตั้งชื่อพรีเซ็ต" />
+          <button id="savePreset">บันทึกพรีเซ็ต</button>
+          <select id="presetList"></select>
+          <button id="loadPreset">โหลด</button>
+          <button id="deletePreset">ลบ</button>
+          <button id="copyLink">คัดลอกลิงก์</button>
+        </div>
+      </div>
+
+      <div class="adv2-note">โหมดข้อความ: เท่ากับ / มีคำว่า / ขึ้นต้นด้วย / ลงท้ายด้วย | ค่าเปอร์เซ็นต์: ใช้สไลเดอร์ “ระหว่าง”</div>
+      <div id="resultTitle" class="bigtitle" style="margin-top:12px;display:none">ผลลัพธ์</div>
+      <div id="tableWrap" class="tablewrap"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="adv2.js"></script>
+</body>
+</html>
