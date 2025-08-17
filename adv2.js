@@ -1,11 +1,7 @@
 (function(){
   const norm = (s) => (s==null?"":String(s)).trim();
   const toNum = (v) => typeof v==="number" ? v : (typeof v==="string" ? ((n=Number(v.replace(/,/g,""))), isNaN(n)?null:n) : null);
-  const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
-
-  const ZONES = { lower:new Set(["LOWER","LOW","LOW ZONE","LOWER ZONE","โซนล่าง","ล่าง"]),
-                  middle:new Set(["MIDDLE","MID","MID ZONE","MIDDLE ZONE","โซนกลาง","กลาง"]),
-                  upper:new Set(["UPPER","HIGH","HIGH ZONE","UPPER ZONE","โซนบน","บน"]) };
+  const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
   const THAI_LABEL = {"Symbol":"ชื่อย่อหุ้น","Stock symbol":"ชื่อย่อหุ้น","Last (Bht)":"ราคาล่าสุด (บาท)","Open (Bht)":"ราคาเปิด (บาท)","Prev. Last (Bht)":"ราคาปิดก่อนหน้า (บาท)","Price Zone":"โซนราคา","Volume":"ปริมาณ","% PriceChange":"% เปลี่ยนแปลงราคา","% PriceGrowth in 3 days":"% การเติบโต 3 วัน","TurnoverRatio(%)":"อัตราหมุนเวียน (%)","% Vol Turnover":"% หมุนเวียนวอลุ่ม","% Vol. growth":"% การเติบโตวอลุ่ม"};
 
@@ -33,12 +29,13 @@
 
   const rowsEl = document.getElementById("rows");
   const addRowBtn = document.getElementById("addRow");
-  const runBtn = document.getElementById("run");
   const clearBtn = document.getElementById("clear");
   const logicSelect = document.getElementById("logicSelect");
   const statusEl = document.getElementById("status");
   const resultTitle = document.getElementById("resultTitle");
   const tableWrap = document.getElementById("tableWrap");
+  const runBottom = document.getElementById("runBottom");
+
   const presetName = document.getElementById("presetName");
   const savePreset = document.getElementById("savePreset");
   const presetList = document.getElementById("presetList");
@@ -93,24 +90,21 @@
     const tInput = document.createElement("input"); tInput.type="text"; tInput.placeholder="ค่า/คำที่ต้องการ"; tInput.setAttribute("list","list-"+rowId);
     const dlist = document.createElement("datalist"); dlist.id="list-"+rowId;
 
-    const zoneWrap = document.createElement("div"); zoneWrap.className="adv2-flex zonewrap adv2-hidden";
-    zoneWrap.innerHTML = `<label>โซน:</label><select class="zoneSel"><option value="">—</option><option value="lower">โซนล่าง (Lower)</option><option value="middle">โซนกลาง (Middle)</option><option value="upper">โซนบน (Upper)</option></select>`;
-
     const kill = document.createElement("button"); kill.textContent="ลบ"; kill.className="kill";
 
     el.appendChild(fieldSel); el.appendChild(spacer); el.appendChild(numWrap); el.appendChild(textWrap); el.appendChild(kill);
     numWrap.appendChild(opSel); numWrap.appendChild(n1); numWrap.appendChild(n2); numWrap.appendChild(slider);
-    textWrap.appendChild(tMode); textWrap.appendChild(tInput); textWrap.appendChild(zoneWrap); el.appendChild(dlist);
+    textWrap.appendChild(tMode); textWrap.appendChild(tInput); el.appendChild(dlist);
 
     function refresh(){
       const h = fieldSel.value;
       const numeric = isNumericField(h, state.DATA);
       if (numeric){
-        textWrap.classList.add("adv2-hidden"); zoneWrap.classList.add("adv2-hidden");
+        textWrap.classList.add("adv2-hidden");
         numWrap.classList.remove("adv2-hidden");
         const isVol = h.toLowerCase().replace(/\./g,"").includes("volume");
         n1.step = n2.step = isVol ? "1":"0.01";
-        const pct = isPercentFieldName(h);
+        const pct = h && (isPercentFieldName(h));
         const showSlider = (pct && opSel.value==="between");
         slider.classList.toggle("adv2-hidden", !showSlider);
         if (pct){
@@ -132,7 +126,6 @@
         textWrap.classList.remove("adv2-hidden");
         const set = new Set(); for(const r of state.DATA){ const v=norm(r[h]); if(v) set.add(v); if(set.size>200) break; }
         dlist.innerHTML = Array.from(set).sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"})).map(v=>`<option value="${escapeHtml(v)}"></option>`).join("");
-        zoneWrap.classList.toggle("adv2-hidden", h!=="Price Zone");
       }
     }
 
@@ -162,9 +155,7 @@
       }else{
         const mode = row.querySelector(".textwrap select").value;
         const text = row.querySelector(".textwrap input[type=text]").value;
-        const zoneSel = row.querySelector(".zonewrap .zoneSel");
-        const zoneKey = zoneSel && !zoneSel.parentElement.classList.contains("adv2-hidden") ? zoneSel.value : "";
-        arr.push({kind:"text", field, mode, text, zoneKey});
+        arr.push({kind:"text", field, mode, text});
       }
     });
     return arr;
@@ -187,14 +178,8 @@
         default: return false;
       }
     }else{
-      if (f.field==="Price Zone" && f.zoneKey){
-        const s = norm(val).toUpperCase();
-        if (f.zoneKey==="lower") return ZONES.lower.has(s);
-        if (f.zoneKey==="middle") return ZONES.middle.has(s);
-        if (f.zoneKey==="upper") return ZONES.upper.has(s);
-      }
       const s = norm(val), q = norm(f.text);
-      if (!q && !f.zoneKey) return false;
+      if (!q) return false;
       switch(f.mode){
         case "eq": return s.localeCompare(q,"en",{sensitivity:"base"})===0;
         case "contains": return s.toLowerCase().includes(q.toLowerCase());
@@ -255,7 +240,6 @@
       }else{
         row.querySelector(".textwrap select").value = r.mode;
         row.querySelector(".textwrap input[type=text]").value = r.text || "";
-        const zSel = row.querySelector(".zonewrap .zoneSel"); if (zSel) zSel.value = r.zoneKey || "";
       }
     });
     logicSelect.value = cfg.logic || "AND";
@@ -271,8 +255,9 @@
   }
 
   addRowBtn.addEventListener("click", addRow);
-  runBtn.addEventListener("click", run);
+  runBottom.addEventListener("click", run);
   clearBtn.addEventListener("click", ()=>{ rowsEl.innerHTML=""; });
+
   savePreset.addEventListener("click", ()=>{
     const name = norm(presetName.value) || ("Preset "+new Date().toLocaleString());
     const arr = listPresets(); arr.push({name, ...cfg()}); savePresets(arr); buildPresetList();

@@ -24,6 +24,7 @@
     .adv2-footer{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
     .adv2-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
     .adv2-presets input[type="text"]{min-width:220px}
+    .adv2-runbar{display:flex;justify-content:center;margin:18px 0}
   </style>
 </head>
 <body>
@@ -48,7 +49,6 @@
         </div>
         <div>
           <button id="addRow">+ เพิ่มเงื่อนไข</button>
-          <button id="run">ค้นหา</button>
           <button id="clear">ล้าง</button>
         </div>
       </div>
@@ -68,6 +68,11 @@
       </div>
 
       <div class="adv2-note">โหมดข้อความ: เท่ากับ / มีคำว่า / ขึ้นต้นด้วย / ลงท้ายด้วย | ค่าเปอร์เซ็นต์: ใช้สไลเดอร์ “ระหว่าง”</div>
+
+      <div class="adv2-runbar">
+        <button id="runBottom">ค้นหา</button>
+      </div>
+
       <div id="resultTitle" class="bigtitle" style="margin-top:12px;display:none">ผลลัพธ์</div>
       <div id="tableWrap" class="tablewrap"></div>
     </div>
