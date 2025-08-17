@@ -201,23 +201,42 @@
   function addRow(){ rowsEl.appendChild(rowTemplate(document.querySelectorAll(".adv2-row").length+1)); }
 
   function collect(){
-    const arr=[];
-    document.querySelectorAll(".adv2-row").forEach(row=>{
-      const field = row.querySelector(".fld").value;
-      const numeric = isNumericField(field, state.DATA);
-      if (numeric){
-        const op = row.querySelector(".numwrap select").value;
-        const a = toNum(row.querySelector(".numwrap input[type=number]").value);
-        const bEl = row.querySelector(".numwrap .n2"); const b = bEl && !bEl.classList.contains("adv2-hidden") ? toNum(bEl.value) : null;
-        arr.push({kind:"num", field, op, a, b});
-      }else{
-        const mode = row.querySelector(".textwrap select").value;
-        const text = row.querySelector(".textwrap input[type=text]").value;
-        arr.push({kind:"text", field, mode, text});
+  const arr = [];
+  document.querySelectorAll(".adv2-row").forEach(row=>{
+    const field = row.querySelector(".fld").value;
+    const numeric = isNumericField(field, state.DATA);
+
+    if (numeric){
+      const op = row.querySelector(".numwrap select").value;
+
+      // ค่าเริ่มต้น: เอาจากช่องตัวเลขตัวแรก (ซ้าย)
+      let a = toNum(row.querySelector(".numwrap input[type=number]").value);
+      let b = null;
+
+      if (op === "between"){
+        // ถ้าช่องตัวเลขตัวที่สอง (ขวา) ไม่ได้ซ่อน ใช้ค่านี้
+        const n2El = row.querySelector(".numwrap .n2");
+        if (n2El && !n2El.classList.contains("adv2-hidden")){
+          b = toNum(n2El.value);
+        } else {
+          // ถ้าถูกซ่อนอยู่ แปลว่าใช้ "สไลเดอร์" → อ่านค่าจากสไลเดอร์แทน
+          const sMinVal = row.querySelector(".sliderpack .sMinVal");
+          const sMaxVal = row.querySelector(".sliderpack .sMaxVal");
+          if (sMinVal) a = toNum(sMinVal.value);
+          if (sMaxVal) b = toNum(sMaxVal.value);
+        }
       }
-    });
-    return arr;
-  }
+
+      arr.push({kind:"num", field, op, a, b});
+    } else {
+      // ฟิลด์ข้อความ
+      const mode = row.querySelector(".textwrap select").value;
+      const text = row.querySelector(".textwrap input[type=text]").value;
+      arr.push({kind:"text", field, mode, text});
+    }
+  });
+  return arr;
+}
 
   function matchOne(f, rec){
     const val = rec[f.field];
