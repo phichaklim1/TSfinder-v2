@@ -52,6 +52,3 @@ a{color:#0a6cff}
   justify-content: flex-end;
   margin-top: 8px;
 }
-
-/* ตัด margin ขวาให้ชิดขอบมากขึ้น (ถ้าอยาก) */
-.pro-link-bar .btn-pro{ margin-right: 0; }
