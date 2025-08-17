@@ -98,44 +98,100 @@
     numWrap.appendChild(opSel); numWrap.appendChild(n1); numWrap.appendChild(n2); numWrap.appendChild(slider);
     textWrap.appendChild(tMode); textWrap.appendChild(tInput); el.appendChild(dlist);
 
-    function refresh(){
-      const h = fieldSel.value;
-      const numeric = isNumericField(h, state.DATA);
-      if (numeric){
-        textWrap.classList.add("adv2-hidden");
-        numWrap.classList.remove("adv2-hidden");
-        const isVol = h.toLowerCase().replace(/\./g,"").includes("volume");
-        n1.step = n2.step = isVol ? "1":"0.01";
-        const pct = h && (isPercentFieldName(h));
-        const showSlider = (pct && opSel.value==="between");
-        slider.classList.toggle("adv2-hidden", !showSlider);
-        if (pct){
-          const values = []; for(const r of state.DATA){ const v=toNum(r[h]); if(v!=null) values.push(v); }
-          let lo = Math.min(...values), hi = Math.max(...values);
-          if (!isFinite(lo)) { lo=-100; hi=100; }
-          const sMin = slider.querySelector(".sMin"), sMax = slider.querySelector(".sMax");
-          const sMinVal = slider.querySelector(".sMinVal"), sMaxVal = slider.querySelector(".sMaxVal");
-          sMin.min = sMax.min = Math.floor(lo); sMin.max = sMax.max = Math.ceil(hi); sMin.step = sMax.step = "1";
-          if(sMin.value==="") sMin.value = String(Math.floor(lo));
-          if(sMax.value==="") sMax.value = String(Math.ceil(hi));
-          sMinVal.value = sMin.value; sMaxVal.value = sMax.value; n1.value = sMin.value; n2.value = sMax.value;
-          const syncS = ()=>{ sMinVal.value=sMin.value; sMaxVal.value=sMax.value; n1.value=sMin.value; n2.value=sMax.value; };
-          const syncI = ()=>{ sMin.value=sMinVal.value; sMax.value=sMaxVal.value; n1.value=sMinVal.value; n2.value=sMaxVal.value; };
-          sMin.oninput = sMax.oninput = syncS; sMinVal.oninput = sMaxVal.oninput = syncI;
-        }
-      }else{
-        numWrap.classList.add("adv2-hidden"); slider.classList.add("adv2-hidden");
-        textWrap.classList.remove("adv2-hidden");
-        const set = new Set(); for(const r of state.DATA){ const v=norm(r[h]); if(v) set.add(v); if(set.size>200) break; }
-        dlist.innerHTML = Array.from(set).sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"})).map(v=>`<option value="${escapeHtml(v)}"></option>`).join("");
+   function refresh(){
+  const h = fieldSel.value;
+  const numeric = isNumericField(h, state.DATA);
+
+  if (numeric){
+    // โหมดตัวเลข: ซ่อนส่วนข้อความ, แสดงส่วนตัวเลข
+    textWrap.classList.add("adv2-hidden");
+    numWrap.classList.remove("adv2-hidden");
+
+    // ตั้ง step: Volume = จำนวนเต็ม, อื่นๆ = ทศนิยม 2
+    const isVol = h.toLowerCase().replace(/\./g,"").includes("volume");
+    n1.step = n2.step = isVol ? "1" : "0.01";
+
+    // ถ้าเป็นฟิลด์เปอร์เซ็นต์ และเลือก "ระหว่าง" → ใช้สไลเดอร์
+    const pct = h && isPercentFieldName(h);
+    const isBetween = (opSel.value === "between");
+    const useSlider = pct && isBetween;
+
+    // โชว์/ซ่อนสไลเดอร์
+    slider.classList.toggle("adv2-hidden", !useSlider);
+
+    if (useSlider){
+      // ใช้สไลเดอร์: ซ่อนกล่องเลขคู่ (น1/น2)
+      n1.classList.add("adv2-hidden");
+      n2.classList.add("adv2-hidden");
+
+      // เซ็ตช่วงของสไลเดอร์จากข้อมูลจริง
+      const values = [];
+      for (const r of state.DATA){
+        const v = toNum(r[h]);
+        if (v != null) values.push(v);
       }
+      let lo = Math.min(...values), hi = Math.max(...values);
+      if (!isFinite(lo)) { lo = -100; hi = 100; }
+
+      const sMin    = slider.querySelector(".sMin");
+      const sMax    = slider.querySelector(".sMax");
+      const sMinVal = slider.querySelector(".sMinVal");
+      const sMaxVal = slider.querySelector(".sMaxVal");
+
+      sMin.min = sMax.min = Math.floor(lo);
+      sMin.max = sMax.max = Math.ceil(hi);
+      sMin.step = sMax.step = "1";
+
+      if (sMin.value === "") sMin.value = String(Math.floor(lo));
+      if (sMax.value === "") sMax.value = String(Math.ceil(hi));
+
+      // sync ค่าระหว่างสไลเดอร์ ↔ กล่องตัวเลข ↔ น1/น2 (ที่ซ่อน)
+      const syncFromSlider = ()=>{
+        sMinVal.value = sMin.value;
+        sMaxVal.value = sMax.value;
+        n1.value = sMin.value;
+        n2.value = sMax.value;
+      };
+      const syncFromInput = ()=>{
+        sMin.value = sMinVal.value;
+        sMax.value = sMaxVal.value;
+        n1.value   = sMinVal.value;
+        n2.value   = sMaxVal.value;
+      };
+      sMin.oninput = sMax.oninput = syncFromSlider;
+      sMinVal.oninput = sMaxVal.oninput = syncFromInput;
+
+      // ให้ค่าตอนเริ่มต้นตรงกัน
+      syncFromSlider();
+
+    } else {
+      // ไม่ใช้สไลเดอร์: แสดงน1 และแสดง/ซ่อนน2 ตาม 'ระหว่าง'
+      n1.classList.remove("adv2-hidden");
+      n2.classList.toggle("adv2-hidden", !isBetween);
+      slider.classList.add("adv2-hidden");
     }
 
-    opSel.addEventListener("change", ()=>{
-      const showBetween = opSel.value==="between";
-      n2.classList.toggle("adv2-hidden", !showBetween);
-      refresh();
-    });
+  } else {
+    // โหมดข้อความ: ซ่อนตัวเลขทั้งหมด แล้วโชว์ส่วนข้อความ
+    numWrap.classList.add("adv2-hidden");
+    slider.classList.add("adv2-hidden");
+    textWrap.classList.remove("adv2-hidden");
+
+    // เติมตัวเลือกเดาซ้ำ (datalist) ให้พิมพ์ง่าย
+    const set = new Set();
+    for (const r of state.DATA){
+      const v = norm(r[h]);
+      if (v) set.add(v);
+      if (set.size > 200) break;
+    }
+    dlist.innerHTML = Array.from(set)
+      .sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"}))
+      .map(v=>`<option value="${escapeHtml(v)}"></option>`)
+      .join("");
+  }
+}
+
+    opSel.addEventListener("change", refresh);
     fieldSel.addEventListener("change", refresh);
     kill.addEventListener("click", ()=> el.remove());
     refresh();
