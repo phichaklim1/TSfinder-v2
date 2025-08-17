@@ -19,9 +19,9 @@ const THAI_LABEL = {
   "XD in…day [Bht]": "XD ใน…วัน [บาท]",   // มีอีลิปซิส …
   "XD in...day [Bht]": "XD ใน…วัน [บาท]", // เผื่อสะกด ... ธรรมดา
 
-  "Asset QoQ% Diff": "ทรัพย์สิน QoQ (%)",
-  "Liabilities QoQ% Diff": "หนี้สิน QoQ (%)",
-  "Equity QoQ% Diff": "ส่วนผู้ถือหุ้น QoQ (%)",
+  "Asset QoQ% Diff": "ทรัพย์สิน QoQ %เปลี่ยนแปลง",
+  "Liabilities QoQ% Diff": "หนี้สิน QoQ %เปลี่ยนแปลง",
+  "Equity QoQ% Diff": "ส่วนผู้ถือหุ้น QoQ %เปลี่ยนแปลง",
 
   "Profit or Loss Last Q": "กำไร/ขาดทุน ไตรมาสล่าสุด",
   "Profit or Loss in (M.Bht) Last Q": "กำไร/ขาดทุน (ลบ.) ไตรมาสล่าสุด",
