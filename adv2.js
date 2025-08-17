@@ -3,8 +3,70 @@
   const toNum = (v) => typeof v==="number" ? v : (typeof v==="string" ? ((n=Number(v.replace(/,/g,""))), isNaN(n)?null:n) : null);
   const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
-  const THAI_LABEL = {"Symbol":"เครื่องหมาย","Stock symbol":"ชื่อย่อหุ้น","Last (Bht)":"ราคาล่าสุด (บาท)","Open (Bht)":"ราคาเปิด (บาท)","Prev. Last (Bht)":"ราคาปิดก่อนหน้า (บาท)","Price Zone":"โซนราคา","Volume":"ปริมาณ","% PriceChange":"% เปลี่ยนแปลงราคา","% PriceGrowth in 3 days":"% การเติบโต 3 วัน","TurnoverRatio(%)":"อัตราหมุนเวียน (%)","% Vol Turnover":"% หมุนเวียนวอลุ่ม","% Vol. growth":"% การเติบโตวอลุ่ม"};
+  // แปลชื่อฟิลด์ อังกฤษ/ไทย (ต้องสะกดให้ "ตรงกับหัวคอลัมน์" ใน Excel)
+const THAI_LABEL = {
+  "Symbol": "เครื่องหมาย",
+  "Stock symbol": "ชื่อย่อหุ้น",
+  "Company Name": "ชื่อบริษัท",
+  "Business details": "รายละเอียดธุรกิจ",
+  "Sector": "หมวดธุรกิจ",
+  "Sector2": "หมวดธุรกิจ 2",
+  "Website": "เว็บไซต์",
+  "%Dividend Yield": "% เงินปันผล",
+  "Group": "กลุ่มหุ้น",
+  "Price Zone": "โซนราคา",
 
+  "XD in…day [Bht]": "XD ใน…วัน [บาท]",   // มีอีลิปซิส …
+  "XD in...day [Bht]": "XD ใน…วัน [บาท]", // เผื่อสะกด ... ธรรมดา
+
+  "Asset QoQ% Diff": "ทรัพย์สิน QoQ (%)",
+  "Liabilities QoQ% Diff": "หนี้สิน QoQ (%)",
+  "Equity QoQ% Diff": "ส่วนผู้ถือหุ้น QoQ (%)",
+
+  "Profit or Loss Last Q": "กำไร/ขาดทุน ไตรมาสล่าสุด",
+  "Profit or Loss in (M.Bht) Last Q": "กำไร/ขาดทุน (ลบ.) ไตรมาสล่าสุด",
+  "EBITDA (M.Bht)": "EBITDA (ลบ.)",
+  "Profit or Loss last year": "สรุปกำไร/ขาดทุนปีก่อน",
+
+  "Cash Flow Quality": "คุณภาพกระแสเงินสด",
+  "Operating Cash Flow (M.Baht)": "กระแสเงินสดจากดำเนินงาน (ลบ.)",
+  "Investing Cash Flow (M.Baht)": "กระแสเงินสดจากลงทุน (ลบ.)",
+  "Financing Cash Flow (M.Baht)": "กระแสเงินสดจากจัดหาเงิน (ลบ.)",
+  "Net Cash Flow (M.Baht)": "กระแสเงินสดสุทธิ (ลบ.)",
+
+  "Prev. Last (Bht)": "ราคาปิดก่อนหน้า (บาท)",
+  "Open (Bht)": "ราคาเปิด (บาท)",
+  "Last (Bht)": "ราคาล่าสุด (บาท)",
+
+  "% PriceChange": "% เปลี่ยนแปลงราคา",
+  "% PriceGrowth in 3 days": "% ราคาที่เติบโตใน 3 วัน",
+  "TurnoverRatio(%)": "อัตราหมุนเวียน (%)",
+  "% Vol Turnover": "% วอลุ่มหมุนเวียน",
+  "Volume": "ปริมาณ",
+  "% Vol. growth": "% การเติบโตวอลุ่ม",
+
+  "Value (‘000 Bht)": "มูลค่า (‘000 บาท)", // เครื่องหมาย quote โค้ง
+  "Value ('000 Bht)": "มูลค่า ('000 บาท)", // เผื่อใช้ quote ตรง
+
+  "Price Spread change warning": "เตือนการเปลี่ยนแปลงช่วงราคา",
+  "P/BV": "P/BV",
+  "M.Cap (M.Bht)": "มูลค่าหลักทรัพย์ตามราคาตลาด (ลบ.)",
+  "Equity (M.Bht)": "ส่วนของผู้ถือหุ้น (ลบ.)",
+  "%FF": "% Free Float",
+  "P/E": "P/E",
+  "NVDR Vol.": "วอลุ่ม NVDR",
+  "NVDR Volume (%Buy) since 1/6/65": "NVDR (%ซื้อ) ตั้งแต่ 1/6/65",
+  "Start date": "วันที่เริ่มเข้าตลาดฯ",
+
+  "Stock age (Y-M-D)": "อายุหุ้น (ป-ด-ว)",   // ยัติภังค์ธรรมดา
+  "Stock age (Y–M–D)": "อายุหุ้น (ป–ด–ว)", // เผื่อ en dash
+
+  "IPO price (Bht)": "ราคา IPO (บาท)",
+  "Price Spread": "ช่วงราคา",
+  "Securities Pledged in Margin Accounts (Vol.)": "หลักทรัพย์ค้ำบัญชีมาร์จิ้น (ปริมาณ)",
+  "Stock Size S/M/L": "ขนาดหุ้น S/M/L"
+};
+  
   const isPercentFieldName = (h) => h.includes("%") || /(growth|change|ratio)/i.test(h);
   const isVolumeFieldName = (h) => h.toLowerCase().replace(/\./g,"").includes("volume");
 
@@ -71,7 +133,7 @@
     const fieldSel = document.createElement("select"); fieldSel.className="fld";
     state.HEADERS.forEach(h=>{
       const opt=document.createElement("option"); const th=THAI_LABEL[h]?` / ${THAI_LABEL[h]}`:"";
-      opt.value=h; opt.textContent=h+th; fieldSel.appendChild(opt);
+      opt.textContent = THAI_LABEL[h] ? `${THAI_LABEL[h]} / ${h}` : h;
     });
 
     const spacer = document.createElement("select"); spacer.className="mid"; spacer.innerHTML = `<option>—</option>`;
