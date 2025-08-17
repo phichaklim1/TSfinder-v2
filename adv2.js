@@ -90,7 +90,9 @@
     const tInput = document.createElement("input"); tInput.type="text"; tInput.placeholder="ค่า/คำที่ต้องการ"; tInput.setAttribute("list","list-"+rowId);
     const dlist = document.createElement("datalist"); dlist.id="list-"+rowId;
 
-    const kill = document.createElement("button"); kill.textContent="ลบ"; kill.className="kill";
+    const kill = document.createElement("button");
+    kill.textContent = "ลบบรรทัดนี้";
+    kill.className = "kill adv2-kill";
 
     el.appendChild(fieldSel); el.appendChild(spacer); el.appendChild(numWrap); el.appendChild(textWrap); el.appendChild(kill);
     numWrap.appendChild(opSel); numWrap.appendChild(n1); numWrap.appendChild(n2); numWrap.appendChild(slider);
@@ -257,7 +259,6 @@
   addRowBtn.addEventListener("click", addRow);
   runBottom.addEventListener("click", run);
   clearBtn.addEventListener("click", ()=>{ rowsEl.innerHTML=""; });
-
   savePreset.addEventListener("click", ()=>{
     const name = norm(presetName.value) || ("Preset "+new Date().toLocaleString());
     const arr = listPresets(); arr.push({name, ...cfg()}); savePresets(arr); buildPresetList();
