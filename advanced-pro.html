@@ -24,8 +24,13 @@
     .adv2-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
     .adv2-presets input[type="text"]{min-width:220px}
     .adv2-runbar{display:flex;justify-content:center;margin:18px 0}
-    .adv2-row button.adv2-kill{background:#ff9800;color:#fff;border:none;padding:8px 12px;border-radius:12px;font-weight:700}
-    .adv2-row button.adv2-kill:hover{background:#fb8c00}
+    /* Orange delete button only on this page */
+    .adv2-row button.adv2-kill{
+      background:#ff9800; color:#fff; border:none; padding:8px 12px;
+      border-radius:12px; font-weight:700;
+      white-space:nowrap; word-break:keep-all; overflow-wrap:normal; /* force single line */
+    }
+    .adv2-row button.adv2-kill:hover{ background:#fb8c00; }
   </style>
 </head>
 <body>
@@ -70,6 +75,7 @@
 
       <div class="adv2-note">โหมดข้อความ: เท่ากับ / มีคำว่า / ขึ้นต้นด้วย / ลงท้ายด้วย | ค่าเปอร์เซ็นต์: ใช้สไลเดอร์ “ระหว่าง”</div>
 
+      <!-- Search button at bottom center -->
       <div class="adv2-runbar">
         <button id="runBottom">ค้นหา</button>
       </div>

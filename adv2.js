@@ -1,7 +1,7 @@
 (function(){
   const norm = (s) => (s==null?"":String(s)).trim();
   const toNum = (v) => typeof v==="number" ? v : (typeof v==="string" ? ((n=Number(v.replace(/,/g,""))), isNaN(n)?null:n) : null);
-  const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+  const escapeHtml = (s) => String(s).replace(/[&<>\"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
   const THAI_LABEL = {"Symbol":"ชื่อย่อหุ้น","Stock symbol":"ชื่อย่อหุ้น","Last (Bht)":"ราคาล่าสุด (บาท)","Open (Bht)":"ราคาเปิด (บาท)","Prev. Last (Bht)":"ราคาปิดก่อนหน้า (บาท)","Price Zone":"โซนราคา","Volume":"ปริมาณ","% PriceChange":"% เปลี่ยนแปลงราคา","% PriceGrowth in 3 days":"% การเติบโต 3 วัน","TurnoverRatio(%)":"อัตราหมุนเวียน (%)","% Vol Turnover":"% หมุนเวียนวอลุ่ม","% Vol. growth":"% การเติบโตวอลุ่ม"};
 
