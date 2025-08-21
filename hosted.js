@@ -6,8 +6,8 @@
   
   
 const POS_GREEN = new Set([
-  "Profit or Loss in (M.Bht) Last Q",
-  "Profit or Loss in (MB) Last Q",
+  "Profit or Loss in (M.Bht) Last Q": 2,
+  "Profit or Loss in (MB) Last Q": 2,
   "% PriceGrowth in 3 days",
   "% PriceChange"
 ]);
