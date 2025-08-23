@@ -19,8 +19,7 @@
   <main class="container">
     <section class="search-bar">
       <label for="query" class="lbl">ชื่อย่อหุ้น:</label>
-      <input id="query" type="text" placeholder="เช่น AOT, PTT, BTS" autocomplete="off"  list="symbolsList" />
-      <datalist id="symbolsList"></datalist>
+      <input id="query" type="text" placeholder="เช่น AOT, PTT, BTS" autocomplete="off" />
       <button id="searchBtn" type="button">ค้นหา</button>
   
       <!-- จุดแสดงข้อความเตือนของหน้า index -->
@@ -41,55 +40,5 @@
 
   <script src="alert-loader.js"></script>
   
-<script>
-// Autocomplete for stock symbols on the home page
-(function(){
-  function fill(rows){
-    const dl = document.getElementById('symbolsList');
-    if (!dl || !Array.isArray(rows)) return;
-    dl.innerHTML = '';
-    const seen = new Set();
-    rows.forEach(r => {
-      const sym = String(r['Stock symbol'] || r['Symbol'] || '').trim();
-      if (!sym || seen.has(sym)) return;
-      seen.add(sym);
-      const company = String(r['Company Name'] || '').trim();
-      const opt = document.createElement('option');
-      opt.value = sym;
-      if (company) opt.label = sym + ' — ' + company;
-      dl.appendChild(opt);
-    });
-  }
-  function tryFromHosted(){
-    if (window.TSF_ROWS && Array.isArray(window.TSF_ROWS) && window.TSF_ROWS.length){
-      fill(window.TSF_ROWS);
-      return true;
-    }
-    return false;
-  }
-  document.addEventListener('DOMContentLoaded', async () => {
-    if (tryFromHosted()) return;
-    try {
-      if (typeof XLSX === 'undefined'){
-        await new Promise(res => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-          s.onload = res;
-          document.head.appendChild(s);
-        });
-      }
-      const res = await fetch('database.xlsx', { cache: 'no-store' });
-      const ab = await res.arrayBuffer();
-      const wb = XLSX.read(ab);
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      fill(rows);
-    } catch (e) {
-      console.warn('autocomplete load failed', e);
-    }
-  });
-})();
-</script>
-
 </body>
 </html>
