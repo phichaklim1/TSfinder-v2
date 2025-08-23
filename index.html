@@ -19,7 +19,8 @@
   <main class="container">
     <section class="search-bar">
       <label for="query" class="lbl">ชื่อย่อหุ้น:</label>
-      <input id="query" type="text" placeholder="เช่น AOT, PTT, BTS" autocomplete="off" />
+      <input id="query" type="text" placeholder="เช่น AOT, PTT, BTS" autocomplete="off"  list="symbolsList"  list="symbolsList"  list="symbolsList" />
+      <datalist id="symbolsList"></datalist>
       <button id="searchBtn" type="button">ค้นหา</button>
   
       <!-- จุดแสดงข้อความเตือนของหน้า index -->
@@ -40,5 +41,97 @@
 
   <script src="alert-loader.js"></script>
   
+
+
+
+<script>
+// Autocomplete (prefix-only, robust) — show only symbols that START with what you type
+(function(){
+  const input = document.getElementById('query');
+  const dl    = document.getElementById('symbolsList');
+  let ALL = []; // [{sym:'AOT', company:'Airports of Thailand'}, ...]
+
+  function harvest(rows){
+    const seen = new Set();
+    ALL = [];
+    rows.forEach(r=>{
+      const sym = String(r['Stock symbol'] || r['Symbol'] || '').trim();
+      if (!sym || seen.has(sym)) return;
+      seen.add(sym);
+      const company = String(r['Company Name'] || '').trim();
+      ALL.push({ sym: sym.toUpperCase(), company });
+    });
+    ALL.sort((a,b)=> a.sym.localeCompare(b.sym));
+  }
+
+  function render(prefix){
+    dl.innerHTML = '';
+    const p = (prefix||'').toUpperCase();
+    let list;
+    if (!p) {
+      list = ALL.slice(0, 300); // prefill a chunk so some browsers show on focus
+    } else {
+      list = ALL.filter(o => o.sym.startsWith(p)).slice(0, 300);
+    }
+    for (const o of list){
+      const opt = document.createElement('option');
+      opt.value = o.sym;
+      if (o.company) opt.label = o.sym + ' — ' + o.company;
+      dl.appendChild(opt);
+    }
+  }
+
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  async function tryTSFRows(timeoutMs=2500){
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs){
+      if (window.TSF_ROWS && Array.isArray(window.TSF_ROWS) && window.TSF_ROWS.length){
+        return window.TSF_ROWS;
+      }
+      await wait(100);
+    }
+    return null;
+  }
+
+  async function loadRows(){
+    // 1) Prefer rows already loaded by hosted.js
+    const rowsFromHost = await tryTSFRows();
+    if (rowsFromHost) return rowsFromHost;
+
+    // 2) Otherwise, read database.xlsx directly
+    if (typeof XLSX === 'undefined'){
+      await new Promise(res=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        s.onload=res; document.head.appendChild(s);
+      });
+    }
+    const res = await fetch('database.xlsx', {cache:'no-store'});
+    const ab  = await res.arrayBuffer();
+    const wb  = XLSX.read(ab);
+    const ws  = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws, {defval:''});
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try{
+      if (!input || !dl) return;
+      const rows = await loadRows();
+      harvest(rows);
+      render(''); // prefill so list is not empty
+      const onType = ()=>{
+        const raw = input.value || '';
+        const last = raw.split(',').pop().trim();
+        render(last);
+      };
+      input.addEventListener('input', onType);
+      input.addEventListener('focus', onType);
+    }catch(e){
+      console.warn('autocomplete init failed', e);
+    }
+  });
+})();
+</script>
 </body>
 </html>
