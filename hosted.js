@@ -106,6 +106,15 @@ const clsFor = (label, n) =>
       }
       statusEl.textContent = 'โหลดฐานข้อมูลแล้ว: '+DATA.length+' แถว';
       query.focus();
+// added: auto open when ?symbol= is present
+try{
+  const params = new URLSearchParams(location.search);
+  const sym = (params.get('symbol') || params.get('s') || '').trim();
+  if(sym){
+    query.value = sym.toUpperCase();
+    doSearch();
+  }
+}catch(_e){}
     } catch(err) {
       statusEl.textContent = 'โหลดฐานข้อมูลไม่สำเร็จ: ' + err.message;
     }

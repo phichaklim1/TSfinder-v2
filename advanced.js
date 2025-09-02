@@ -281,7 +281,8 @@
       const tr = document.createElement("tr");
       const sym = r[symKey] == null ? "-" : String(r[symKey]);
       const val = toFixedDisplay(header, r[header]);
-      tr.innerHTML = `<td>${escapeHtml(sym)}</td><td>${escapeHtml(val)}</td>`;
+      const link = `<a href="index.html?symbol=${encodeURIComponent(sym)}" target="_blank" rel="noopener">${escapeHtml(sym)}</a>`;
+      tr.innerHTML = `<td>${link}</td><td>${escapeHtml(val)}</td>`;
       tbody.appendChild(tr);
     }
     tbl.appendChild(tbody);

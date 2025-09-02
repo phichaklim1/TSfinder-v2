@@ -353,7 +353,13 @@ const THAI_LABEL = {
     for(const r of recs){
       const tr=document.createElement("tr");
       tr.innerHTML = headers.map(h=>{
-        const v=r[h]; if (toNum(v)!=null) return `<td>${escapeHtml(formatValue(h,v))}</td>`;
+        const v=r[h];
+        if (h===state.SYM) {
+          const sym = v==null? "-" : String(v);
+          const url = `index.html?symbol=${encodeURIComponent(sym)}`;
+          return `<td><a href="${url}" target="_blank" rel="noopener">${escapeHtml(sym)}</a></td>`;
+        }
+        if (toNum(v)!=null) return `<td>${escapeHtml(formatValue(h,v))}</td>`;
         return `<td>${escapeHtml(v==null?"-":String(v))}</td>`;
       }).join("");
       tbody.appendChild(tr);
