@@ -72,3 +72,20 @@ a{color:#0a6cff}
   justify-content:center;   /* ให้อยู่กลางแถวเหมือนเดิม */
   margin:18px 0;
 }
+
+/* หัวตารางคลิกเรียงได้ + ลูกศรบอกทิศทาง (หน้า PRO) */
+.adv2-table th{
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+.adv2-table th.sort-asc::after{
+  content: "▲";
+  position: absolute;
+  right: 8px;
+}
+.adv2-table th.sort-desc::after{
+  content: "▼";
+  position: absolute;
+  right: 8px;
+}

@@ -365,6 +365,7 @@ const THAI_LABEL = {
       tbody.appendChild(tr);
     }
     tbl.appendChild(tbody); tableWrap.innerHTML=""; tableWrap.appendChild(tbl);
+    makeTableSortable(tbl);
   }
 
   const LSKEY="tsf_presets_v2";
@@ -423,4 +424,54 @@ const THAI_LABEL = {
   });
 
   loadDB();
+
+// ====== ทำให้ตารางเรียงได้ด้วยการคลิกหัวคอลัมน์ ======
+function makeTableSortable(table){
+  if (!table || table.dataset.sortable === '1') return;
+  table.dataset.sortable = '1';
+
+  const ths = table.querySelectorAll('thead th');
+
+  // แปลงข้อความเป็นตัวเลข (รองรับคอมมา, %, ช่องว่าง, ตัวเลขไทย)
+  const toNumLoose = (s) => {
+    if (s == null) return null;
+    s = String(s);
+    const thaiDigits = {'๐':'0','๑':'1','๒':'2','๓':'3','๔':'4','๕':'5','๖':'6','๗':'7','๘':'8','๙':'9'};
+    s = s.replace(/[๐-๙]/g, d => thaiDigits[d]).replace(/[%,\s]/g,'');
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  ths.forEach((th, idx) => {
+    th.addEventListener('click', () => {
+      const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+      ths.forEach(t => { t.dataset.sortDir=''; t.classList.remove('sort-asc','sort-desc'); });
+      th.dataset.sortDir = dir;
+      th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.querySelectorAll('tr')).map((tr,i)=>({tr,i}));
+
+      const cellText = (tr) => (tr.children[idx]?.textContent || '').trim();
+
+      rows.sort((A,B)=>{
+        const aT = cellText(A.tr);
+        const bT = cellText(B.tr);
+        const aN = (typeof toNum === 'function') ? toNum(aT) : toNumLoose(aT);
+        const bN = (typeof toNum === 'function') ? toNum(bT) : toNumLoose(bT);
+        let cmp;
+        if (aN !== null && bN !== null) {
+          cmp = aN - bN;
+        } else {
+          cmp = aT.localeCompare(bT, 'th');
+        }
+        if (cmp === 0) cmp = A.i - B.i;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+
+      rows.forEach(r => tbody.appendChild(r.tr));
+    });
+  });
+}
+
 })();
